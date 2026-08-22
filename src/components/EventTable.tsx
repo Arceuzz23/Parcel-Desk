@@ -15,12 +15,15 @@ export interface EventTableProps {
 }
 
 /**
- * The editable event log — the single source of truth the app validates
- * and processes. This component owns NO domain logic of its own: every
+ * The editable event log — an editing mechanism, not the visual hero (see
+ * the render order in App.tsx: the Handover Board and Shelf Map come
+ * first, this comes last). It owns NO domain logic of its own: every
  * keystroke just dispatches UPDATE_FIELD, and the actual ARRIVE/COLLECT
  * rules live entirely in src/lib/. That separation is what let the domain
  * engine ship (and get fully tested) in Phase 2-6 before any of this UI
- * existed.
+ * existed, and it's also why this component can be visually de-emphasized
+ * without touching a single line of its logic — restyling it here changes
+ * nothing about what Run Handover actually computes.
  *
  * Columns, per the spec: # | Event ID | Action | Parcel ID | Student |
  * Pickup Code | Shelf | Actions.
@@ -32,16 +35,19 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
 
   return (
     <section aria-labelledby="event-table-heading" className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <h2 id="event-table-heading" className="text-sm font-semibold text-foreground">
-          Event Log
-        </h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 id="event-table-heading" className="font-mono text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+            Event Log
+          </h2>
+          <p className="text-xs text-muted-foreground">Source of truth for the next run — edit freely, nothing here is final until you Run Handover.</p>
+        </div>
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => dispatch({ type: "ADD_ROW" })}>
+          <Button type="button" variant="outline" size="sm" onClick={() => dispatch({ type: "ADD_ROW" })} className="font-mono text-xs uppercase">
             <Plus data-icon="inline-start" aria-hidden="true" />
             Add Event
           </Button>
-          <Button type="button" size="sm" onClick={() => dispatch({ type: "RUN" })} data-testid="run-handover">
+          <Button type="button" size="sm" onClick={() => dispatch({ type: "RUN" })} data-testid="run-handover" className="font-mono text-xs uppercase">
             Run Handover
           </Button>
         </div>
@@ -50,7 +56,7 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
       {rows.length === 0 ? (
         <EmptyState title="No events yet" description="Add an event to begin." testId="event-table-empty" />
       ) : (
-        <div className="rounded-lg border border-border">
+        <div className="border border-border">
           <Table>
             <TableHeader>
               <TableRow>

@@ -52,6 +52,18 @@ export interface AppState {
    * Empty array = no errors (either never run, or the last run passed).
    */
   validationErrors: ValidationError[];
+  /**
+   * Cross-highlight selection: a parcel ID, or null for "nothing selected."
+   * This is the ONLY thing that ties the Event Timeline, Handover Board,
+   * and Shelf Map together interactively — each of those views independently
+   * looks up whether a given event/parcel/shelf's parcel ID matches this
+   * field and renders itself highlighted if so. There is no duplicate
+   * "selected event" or "selected shelf" state: an event is identified by
+   * its parcelId, a shelf's occupants are identified by their parcelId
+   * (via getShelfOccupancy, src/lib/selectors.ts), so one ID is enough to
+   * cross-reference all three views against the same `lastResult`.
+   */
+  selectedParcelId: string | null;
 }
 
 export type AppAction =
@@ -59,7 +71,8 @@ export type AppAction =
   | { type: "UPDATE_FIELD"; key: string; field: keyof EventInput; value: string }
   | { type: "DELETE_ROW"; key: string }
   | { type: "RUN" }
-  | { type: "RESET" };
+  | { type: "RESET" }
+  | { type: "SELECT_PARCEL"; parcelId: string };
 
 function createRowKey(): string {
   // crypto.randomUUID is available in all supported browsers and in jsdom
@@ -81,6 +94,7 @@ export function createInitialState(): AppState {
     rows: toRows(getBuiltInEvents()),
     lastResult: null,
     validationErrors: [],
+    selectedParcelId: null,
   };
 }
 
@@ -118,18 +132,27 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         // here (rather than leaving a stale prior result on screen) so the
         // board/outcomes/summary all clear immediately, and surface the
         // full list of validation errors instead.
-        return { ...state, lastResult: null, validationErrors: validation.errors };
+        return { ...state, lastResult: null, validationErrors: validation.errors, selectedParcelId: null };
       }
 
       // Valid: process fresh (processHandover always starts from empty
       // internal state — see src/lib/processor.ts) and clear any stale
-      // validation errors from a previous failed attempt.
+      // validation errors/selection from a previous attempt — a selection
+      // made against the old board wouldn't necessarily mean anything
+      // against the new one.
       const result: HandoverResult = processHandover(validation.events);
-      return { ...state, lastResult: result, validationErrors: [] };
+      return { ...state, lastResult: result, validationErrors: [], selectedParcelId: null };
     }
 
     case "RESET": {
       return createInitialState();
+    }
+
+    case "SELECT_PARCEL": {
+      // Toggle: clicking an already-selected parcel/event/shelf deselects
+      // it, rather than requiring a separate "clear selection" control.
+      const selectedParcelId = state.selectedParcelId === action.parcelId ? null : action.parcelId;
+      return { ...state, selectedParcelId };
     }
 
     default: {

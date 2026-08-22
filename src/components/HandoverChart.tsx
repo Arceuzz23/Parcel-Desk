@@ -34,8 +34,12 @@ export function HandoverChart({ summary }: HandoverChartProps) {
   ];
 
   return (
-    <div className="flex items-center justify-center" data-testid="handover-chart">
-      <RingChart data={data} size={128} strokeWidth={14} ringGap={4} baseInnerRadius={40}>
+    <div className="flex shrink-0 items-center justify-center" data-testid="handover-chart">
+      {/* Sized to sit inline in the typographic summary row, not centered
+          in its own wide card (see SummaryPanel.tsx — this used to live
+          in a Card; the redesign moved it into the same figure row as
+          Pending/Collected/Rejected/Events instead). */}
+      <RingChart data={data} size={84} strokeWidth={9} ringGap={3} baseInnerRadius={26}>
         <Ring index={0} />
         <Ring index={1} />
         {/* "On board", not "Total" — this ring-chart center number is
@@ -43,7 +47,9 @@ export function HandoverChart({ summary }: HandoverChartProps) {
             (see the comment above), so when a run has rejections, this
             number is smaller than the event log's actual event count and
             a bare "Total" would misleadingly read as "all events
-            processed." "On board" scopes it correctly at a glance. */}
+            processed." "On board" scopes it correctly at a glance, and the
+            adjacent "06 EVENTS" figure + caption in SummaryPanel remove
+            any remaining ambiguity. */}
         <RingCenter defaultLabel="On board" />
       </RingChart>
     </div>

@@ -76,3 +76,16 @@ export const staggerChildren = (staggerMs = 40): Variants => ({
     transition: { staggerChildren: staggerMs / 1000 },
   },
 });
+
+/**
+ * True when the OS-level "reduce motion" preference is on. `MotionConfig
+ * reducedMotion="user"` (src/app/App.tsx) already makes every motion.*
+ * element skip its animated transition for these users — this export is
+ * for the one place that ISN'T a motion.* element: App.tsx's "replay"
+ * status timer (PROCESSING… / HANDOVER COMPLETE) is a plain setTimeout,
+ * not a Motion animation, so it has to check this itself rather than
+ * rely on MotionConfig to shorten it.
+ */
+export function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}

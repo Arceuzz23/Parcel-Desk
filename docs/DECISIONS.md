@@ -48,9 +48,10 @@
 - `@number-flow/react` (a transitive dependency pulled in by the Bklit
   chart) is reused for the summary tiles' count-up transition rather than
   hand-rolling a second number-tweening implementation with Motion.
-- Dark mode follows `prefers-color-scheme` only — no in-app light/dark
-  toggle, since the spec's single-screen UI has no chrome for one and
-  system-following is enough to satisfy "professional, restrained."
+- ~~Dark mode follows `prefers-color-scheme` only~~ — superseded: the app now
+  commits to a single dark "operations console" identity (graphite/ink,
+  one amber accent) rather than adapting to the OS light/dark preference at
+  all. See the "visual redesign" entries below.
 - `--destructive`/`--status-rejected`/`--status-success` were hand-tuned to
   hex literals (not left as shadcn's default oklch values) after
   axe-core's automated sweep (`e2e/accessibility.spec.ts`) caught three
@@ -64,3 +65,74 @@
   the three contrast failures above; removing the background tint fixed it
   without touching the shared `--muted-foreground` token used everywhere
   else.
+
+## Visual redesign — "Operations Console" (post-functional-polish pass)
+
+- One committed dark identity (graphite/ink background, one amber
+  "operational" accent, green/red reserved for success/rejected only),
+  not a light/dark toggle — see the superseded entry above. `--accent`
+  doubles as the PENDING status color (amber-for-in-progress is a
+  standard logistics convention), so the palette stays at exactly 3 hues
+  total (accent, success, rejected) plus neutrals.
+- Every palette color was picked by computing its actual composited WCAG
+  contrast ratio in Node (relative-luminance formula) against its real
+  usage background — including alpha-tinted badge backgrounds, which
+  compute differently from the solid color alone. `--rejected` in
+  particular needed a second, brighter pass: `#f26f6a` passed against
+  solid `--surface`/`--background` (6-7:1) but only hit 4.18:1 once
+  composited under its own `bg-rejected/10` badge tint — axe-core caught
+  it; `#ff8d87` clears the composited case with margin. Lesson carried
+  forward from the first contrast pass: verify the *actual rendered*
+  background, not just the nearest solid swatch.
+- `selectedParcelId: string | null` (appReducer.ts) is the only state
+  behind the Event Timeline ↔ Handover Board ↔ Shelf Map cross-highlight.
+  No per-view "is this selected" duplication — every view independently
+  compares its own parcelId(s) against this one field. Clicking an
+  already-selected item deselects it (toggle), so no separate "clear
+  selection" control is needed. Reset and a fresh successful Run both
+  clear it, since a selection made against a since-replaced board
+  wouldn't necessarily mean anything against the new one.
+- `ParcelLabel` (src/components/ParcelLabel.tsx) is a single presentational
+  component reused by both the Handover Board's two columns and the Shelf
+  Map — one visual definition of "what a parcel looks like," not three.
+  It's deliberately NOT a Motion component itself: the enter/exit/FLIP
+  animation lives on the `motion.li` wrapper each caller owns (layoutId
+  for the Board's cross-column FLIP, plain enter/exit for the Shelf Map),
+  which is what lets ParcelLabel stay a trivial, reusable button rather
+  than entangling every consumer in AnimatePresence/layoutId semantics.
+- The "PROCESSING… / HANDOVER COMPLETE" replay-status indicator
+  (App.tsx `runStatus`) is local `useState`, not reducer state — it's a
+  purely cosmetic "is the entrance animation currently playing" flag with
+  zero bearing on what any other component computes, unlike
+  `selectedParcelId` above (genuine cross-component state). Its duration
+  is an analytically-sized `setTimeout`, not a Motion `onAnimationComplete`
+  callback — the Event Timeline's stagger container only orchestrates its
+  children's timing via `variants` (it has no animatable value of its
+  own), and that orchestration-only pattern doesn't reliably fire a parent
+  `onAnimationComplete`.
+- The Summary's fourth figure ("EVENTS") is `result.outcomes.length` read
+  directly in SummaryPanel — no new `HandoverSummary` field. Domain
+  behavior/output shape is unchanged; the UI already had everything it
+  needed to show a true, unambiguous total next to the pending/collected-
+  only ring chart.
+- The rejection-detail panel's "expected {code}" for `PICKUP_CODE_MISMATCH`
+  is derived, not stored: a parcel's `pickupCode` never changes after
+  ARRIVE (see processor.ts), and the processor's own check order
+  guarantees a parcel that produced a mismatch was pending at that moment
+  — so it's always findable in the final result's `pending` or `collected`
+  list (whichever it ended up in), and that list already carries the one
+  true code. No new domain field, no second source of truth.
+- Test selectors that referenced ParcelLabel's CSS classes broke on the
+  restyle (expected — that's exactly the coupling data-testid exists to
+  avoid). Fixed once, in `e2e/handover.spec.ts`, by reading the
+  `data-testid="parcel-{id}"` attribute ParcelLabel already exposed
+  instead of a class selector; every other test's data-testid contract
+  (`outcomes-list`, `pending-column`, `summary-pending`, etc.) was kept
+  character-for-character identical through the redesign specifically so
+  the rest of the suite wouldn't need touching.
+- jsdom has no `window.matchMedia` — added a minimal stub in
+  `src/tests/setup.ts` (always reports "no preference") once App.tsx
+  started calling `prefersReducedMotion()` outside of Motion's own
+  reduced-motion handling. RTL tests exercise non-reduced behavior;
+  `e2e/accessibility.spec.ts`'s dedicated reduced-motion test covers the
+  real preference in a real browser.

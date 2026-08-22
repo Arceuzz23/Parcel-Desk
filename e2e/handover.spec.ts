@@ -30,13 +30,21 @@ async function runHandover(page: Page) {
  * here, not just membership.
  */
 async function expectColumnParcelIds(page: Page, testId: string, expectedIds: string[]) {
-  const parcelIdCells = page.getByTestId(testId).locator("li span.font-mono.font-medium");
-  await expect(parcelIdCells).toHaveText(expectedIds);
+  // ParcelLabel (src/components/ParcelLabel.tsx) tags its root button
+  // `data-testid="parcel-{id}"` — reading that attribute rather than a CSS
+  // class selector keeps this test decoupled from ParcelLabel's visual
+  // styling, which is expected to keep changing.
+  const parcelButtons = page.getByTestId(testId).locator('[data-testid^="parcel-"]');
+  await expect(parcelButtons).toHaveCount(expectedIds.length);
+  const testIds = await parcelButtons.evaluateAll((elements) =>
+    elements.map((element) => element.getAttribute("data-testid")),
+  );
+  expect(testIds).toEqual(expectedIds.map((id) => `parcel-${id}`));
 }
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Hostel Parcel-Desk Handover Board" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Operations Console" })).toBeVisible();
 });
 
 test("1. built-in fixture matches the canonical oracle", async ({ page }) => {

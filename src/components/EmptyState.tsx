@@ -22,10 +22,10 @@ export interface EmptyStateProps {
 export function EmptyState({ title, description, testId }: EmptyStateProps) {
   return (
     <div
-      className="flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border px-6 py-10 text-center"
+      className="flex flex-col items-center justify-center gap-1 border border-dashed border-border px-6 py-10 text-center"
       data-testid={testId}
     >
-      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="font-mono text-xs font-semibold tracking-widest text-muted-foreground uppercase">{title}</p>
       <p className="text-sm text-muted-foreground">{description}</p>
     </div>
   );

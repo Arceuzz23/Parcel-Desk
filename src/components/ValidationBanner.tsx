@@ -27,8 +27,8 @@ export function ValidationBanner({ errors }: ValidationBannerProps) {
           exit="exit"
           data-testid="validation-banner"
         >
-          <Alert variant="destructive" role="alert">
-            <AlertTitle>
+          <Alert variant="destructive" role="alert" className="rounded-none">
+            <AlertTitle className="font-mono text-xs tracking-widest uppercase">
               {errors.length === 1 ? "1 validation error" : `${errors.length} validation errors`} — run blocked
             </AlertTitle>
             <AlertDescription>
