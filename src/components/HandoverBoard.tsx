@@ -117,7 +117,16 @@ function CollectedColumn({ parcels }: { parcels: CollectedParcel[] }) {
                   initial="initial"
                   animate="animate"
                   exit="exit"
-                  className="rounded-md border border-status-success/20 bg-status-success/5 px-3 py-2 text-sm"
+                  // A tinted background here (bg-status-success/5) used to
+                  // sit under text-muted-foreground child text; axe-core
+                  // flagged that combination as failing WCAG AA contrast
+                  // (4.43:1, just under the 4.5:1 minimum) even though the
+                  // same gray passes comfortably on the plain card
+                  // background used elsewhere. The border alone still
+                  // conveys "this row is in the collected column" —
+                  // status here is never color-only anyway, since the
+                  // column heading and OutcomeBadge already say so in text.
+                  className="rounded-md border border-status-success/30 bg-card px-3 py-2 text-sm"
                 >
                   <div className="flex items-baseline justify-between gap-2">
                     <span className="font-mono font-medium text-foreground">{parcel.parcelId}</span>

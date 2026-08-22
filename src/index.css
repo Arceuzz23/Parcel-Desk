@@ -36,7 +36,15 @@
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  /* Hex, not oklch, and shared with --status-rejected below — both are
+     "something was rejected" red, and both failed WCAG AA at shadcn/ui's
+     default oklch(0.577 0.245 27.325) (3.86:1 on white for this token,
+     3.98:1 on the status badge's own tinted background for the other).
+     #b91c1c clears both contexts with margin (6.47:1 on white, 5.40:1 on
+     the badge tint) — picked by computing WCAG ratios directly rather
+     than adjusting oklch(L C H) by feel, since oklch's chroma/hue mapping
+     into sRGB doesn't move contrast the way you'd expect from L alone. */
+  --destructive: #b91c1c;
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
@@ -46,16 +54,25 @@
      and board-state indicators. Kept separate from the generic shadcn
      palette so status meaning is explicit at the call site, e.g.
      `bg-status-success` rather than an unrelated `bg-primary`. */
-  --status-success: oklch(0.55 0.15 155);
+  /* A hex literal, not oklch like its siblings: the oklch(0.55 0.15 155)
+     this started as rendered ~3.88:1 against the badge's own bg-status-
+     success/10 tint (axe-core color-contrast, WCAG AA) — oklch's chroma/
+     hue mapping into sRGB doesn't hit the exact lightness you'd expect
+     from the L channel alone. This hex value was picked by directly
+     computing WCAG contrast ratios against that tint (see git history /
+     docs/DECISIONS.md) rather than guessing another oklch triple. */
+  --status-success: #046c37;
   --status-success-foreground: oklch(0.985 0 0);
   --status-pending: oklch(0.6 0.15 85);
   --status-pending-foreground: oklch(0.145 0 0);
-  --status-rejected: oklch(0.577 0.245 27.325);
+  --status-rejected: var(--destructive);
   --status-rejected-foreground: oklch(0.985 0 0);
 
-  /* Reused by the Bklit ring chart (pending vs. collected split). */
+  /* Reused by the Bklit ring chart (pending vs. collected split). Same
+     hues as --status-pending / --status-success above, for visual
+     consistency between the chart and the outcome badges. */
   --chart-1: oklch(0.6 0.15 85);
-  --chart-2: oklch(0.55 0.15 155);
+  --chart-2: #046c37;
 }
 
 /* Dark mode follows the OS setting automatically (no in-app toggle, per the
