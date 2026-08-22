@@ -47,3 +47,35 @@ test.describe("accessibility", () => {
     expect(results.violations).toEqual([]);
   });
 });
+
+test.describe("reduced motion", () => {
+  // MotionConfig reducedMotion="user" (src/app/App.tsx) is supposed to make
+  // every motion.* element skip its animated transition — but still reach
+  // its final visual state — when the OS-level "reduce motion" preference
+  // is on. The one way that silently breaks is a component whose "final
+  // state" is only ever reached VIA the animation callback; with the
+  // animation skipped, such an element would be stuck invisible forever.
+  // This test emulates the preference and checks the app is still fully
+  // usable, not just "doesn't crash."
+  test.use({ colorScheme: "light", reducedMotion: "reduce" });
+
+  test("Run Handover still fully populates the UI with reduced motion on", async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("run-handover").click();
+
+    // No waitForTimeout here on purpose: with reduced motion honored,
+    // these should already be at their final, fully-opaque state
+    // essentially immediately, not after a settle delay like the tests
+    // above need.
+    const outcomes = page.getByTestId("outcomes-list").locator("li");
+    await expect(outcomes).toHaveCount(6);
+    for (const item of await outcomes.all()) {
+      await expect(item).toBeVisible();
+      await expect(item).toHaveCSS("opacity", "1");
+    }
+
+    await expect(page.getByTestId("summary-pending")).toContainText("3");
+    await expect(page.getByTestId("pending-column")).toBeVisible();
+    await expect(page.getByTestId("pending-column")).toHaveCSS("opacity", "1");
+  });
+});

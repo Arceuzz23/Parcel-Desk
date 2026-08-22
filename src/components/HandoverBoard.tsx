@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CollectedParcel, HandoverResult, PendingParcel } from "@/lib/types";
-import { pendingParcelItem, popIn } from "@/lib/motion";
+import { fadeInUp, pendingParcelItem, popIn } from "@/lib/motion";
 
 export interface HandoverBoardProps {
   /** See EventOutcomes.tsx for the null-vs-empty-result distinction. */
@@ -24,10 +24,8 @@ export interface HandoverBoardProps {
 export function HandoverBoard({ result }: HandoverBoardProps) {
   if (result === null) {
     return (
-      <section aria-labelledby="board-heading" className="flex flex-col gap-3">
-        <h2 id="board-heading" className="text-sm font-semibold text-foreground">
-          Handover Board
-        </h2>
+      <section aria-labelledby="board-heading" className="flex flex-col gap-3 border-t border-border pt-6">
+        <BoardHeading />
         <EmptyState
           title="No result yet"
           description="Run Handover to see the pending and collected board."
@@ -38,15 +36,37 @@ export function HandoverBoard({ result }: HandoverBoardProps) {
   }
 
   return (
-    <section aria-labelledby="board-heading" className="flex flex-col gap-3">
-      <h2 id="board-heading" className="text-sm font-semibold text-foreground">
-        Handover Board
-      </h2>
-      <div className="grid gap-4 sm:grid-cols-2">
+    <section aria-labelledby="board-heading" className="flex flex-col gap-3 border-t border-border pt-6">
+      <BoardHeading />
+      {/* fadeInUp here (mirroring SummaryPanel/EventOutcomes) plays once
+          when this branch first mounts — i.e. right when a run produces a
+          result — so the board visibly settles into place as "the answer
+          just arrived," reinforcing that this section is the payoff of
+          clicking Run Handover, not incidental content below it. */}
+      <motion.div variants={fadeInUp} initial="initial" animate="animate" className="grid gap-4 sm:grid-cols-2">
         <PendingColumn parcels={result.pending} />
         <CollectedColumn parcels={result.collected} />
-      </div>
+      </motion.div>
     </section>
+  );
+}
+
+/**
+ * Deliberately larger than every other section heading in the app
+ * (text-lg vs. everyone else's text-sm) — the Handover Board is the
+ * operational output of the whole screen (docs/PLAN.md: "never secondary
+ * to charts"), so it gets the one heading that visually outranks its own
+ * column headers (Pending/Collected use the shadcn CardTitle default,
+ * text-base) rather than being smaller than them.
+ */
+function BoardHeading() {
+  return (
+    <div>
+      <h2 id="board-heading" className="text-lg font-semibold text-foreground">
+        Handover Board
+      </h2>
+      <p className="text-sm text-muted-foreground">The final result — who's still on the shelf, who's been collected.</p>
+    </div>
   );
 }
 

@@ -38,7 +38,13 @@ export function HandoverChart({ summary }: HandoverChartProps) {
       <RingChart data={data} size={128} strokeWidth={14} ringGap={4} baseInnerRadius={40}>
         <Ring index={0} />
         <Ring index={1} />
-        <RingCenter defaultLabel="Total" />
+        {/* "On board", not "Total" — this ring-chart center number is
+            pending+collected only. Rejected events never reach the board
+            (see the comment above), so when a run has rejections, this
+            number is smaller than the event log's actual event count and
+            a bare "Total" would misleadingly read as "all events
+            processed." "On board" scopes it correctly at a glance. */}
+        <RingCenter defaultLabel="On board" />
       </RingChart>
     </div>
   );

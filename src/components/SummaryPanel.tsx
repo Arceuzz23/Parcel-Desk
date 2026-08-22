@@ -50,9 +50,15 @@ export function SummaryPanel({ result }: SummaryPanelProps) {
         {/* Chart earns its place only once there's something to compare —
             an empty or pre-run board renders no rings, not a hollow one. */}
         {summary !== null && total > 0 && (
-          <Card className="flex w-full shrink-0 items-center justify-center sm:w-44">
-            <CardContent className="flex items-center justify-center py-2">
+          <Card className="flex w-full shrink-0 flex-col items-center justify-center gap-1 sm:w-44">
+            <CardContent className="flex flex-col items-center justify-center gap-1 py-2">
               <HandoverChart summary={summary} />
+              {/* Explicit caption, not just the ring center's "On board"
+                  label — this chart is a Pending/Collected split of the
+                  board only. With the Rejected count sitting right next
+                  to it (still summing to all 6 events when you add it),
+                  it should never read as "4 is how many events ran." */}
+              <p className="text-center text-xs text-muted-foreground">Pending / Collected split</p>
             </CardContent>
           </Card>
         )}
