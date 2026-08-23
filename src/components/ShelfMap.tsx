@@ -44,7 +44,11 @@ export function ShelfMap({ result, selectedParcelId, onSelectParcel }: ShelfMapP
       subtitle="Live view of where pending parcels are kept."
       headerRight={`${occupiedCount} ${occupiedCount === 1 ? "shelf" : "shelves"} occupied`}
     >
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" data-testid="shelf-map">
+      {/* grid-cols-2 sm:grid-cols-4 (not a staggered 2/3/4 ramp) — the brief
+          asks for a horizontal A1 A2 B1 B2 row on desktop, and 4 compact
+          cells fit comfortably in this column's width from the sm
+          breakpoint up. */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="shelf-map">
         <AnimatePresence initial={false}>
           {slots.map(({ shelf, occupants }) => {
             const occupied = occupants.length > 0;
@@ -55,14 +59,14 @@ export function ShelfMap({ result, selectedParcelId, onSelectParcel }: ShelfMapP
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                className={cn("flex flex-col gap-2 border p-3", occupied ? "border-border" : "border-dashed border-border")}
+                className={cn("flex flex-col gap-1.5 border p-2", occupied ? "border-border" : "border-dashed border-border")}
                 data-testid={`shelf-${shelf}`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-base font-semibold tracking-wide text-foreground">{shelf}</span>
+                  <span className="font-mono text-sm font-semibold tracking-wide text-foreground">{shelf}</span>
                   <span
                     className={cn(
-                      "rounded-full px-1.5 py-0.5 font-mono text-[10px] tracking-wide uppercase",
+                      "rounded-full px-1.5 py-0.5 font-mono text-[9px] tracking-wide uppercase",
                       occupied ? "bg-accent/15 text-accent" : "bg-surface-raised text-muted-foreground",
                     )}
                   >
@@ -89,9 +93,9 @@ export function ShelfMap({ result, selectedParcelId, onSelectParcel }: ShelfMapP
                 ) : (
                   <div
                     aria-hidden="true"
-                    className="flex flex-1 items-center justify-center border border-dashed border-border-strong py-3 text-muted-foreground"
+                    className="flex flex-1 items-center justify-center border border-dashed border-border-strong py-1.5 text-muted-foreground"
                   >
-                    <Plus className="size-4" strokeWidth={1.5} />
+                    <Plus className="size-3.5" strokeWidth={1.5} />
                   </div>
                 )}
               </motion.div>

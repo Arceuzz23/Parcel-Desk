@@ -13,29 +13,25 @@ import type { EventInput } from "@/lib/types";
 export interface EventTableProps {
   rows: EditableEventRow[];
   dispatch: Dispatch<AppAction>;
-  onRun: () => void;
 }
 
 /**
  * The editable event log — an editing mechanism, not the visual hero (see
- * the render order in App.tsx: the Handover Board, Shelf Map, and Event
- * Timeline come first, this comes last, in its own column). It owns NO
- * domain logic of its own: every keystroke just dispatches UPDATE_FIELD,
- * and the actual ARRIVE/COLLECT rules live entirely in src/lib/. That
- * separation is what let the domain engine ship (and get fully tested) in
- * Phase 2-6 before any of this UI existed, and it's also why this
- * component can be visually de-emphasized without touching a single line
- * of its logic — restyling it here changes nothing about what Run
- * Handover actually computes.
+ * the render order in App.tsx). It owns NO domain logic of its own: every
+ * keystroke just dispatches UPDATE_FIELD, and the actual ARRIVE/COLLECT
+ * rules live entirely in src/lib/. That separation is what let the domain
+ * engine ship (and get fully tested) in Phase 2-6 before any of this UI
+ * existed, and it's also why this component can be visually de-emphasized
+ * without touching a single line of its logic — restyling it here changes
+ * nothing about what Run Handover actually computes.
  *
- * `onRun` (not a raw `dispatch({ type: "RUN" })` here) is the same
- * callback the header's Run Handover button uses (see App.tsx) — one RUN
- * code path, two entry points into it.
+ * Run Handover itself lives only in the header (Header.tsx) — one primary
+ * action, one place to trigger it.
  *
  * Columns, per the spec: # | Event ID | Action | Parcel ID | Student |
  * Pickup Code | Shelf | Actions.
  */
-export function EventTable({ rows, dispatch, onRun }: EventTableProps) {
+export function EventTable({ rows, dispatch }: EventTableProps) {
   function updateField(key: string, field: keyof EventInput, value: string) {
     dispatch({ type: "UPDATE_FIELD", key, field, value });
   }
@@ -46,21 +42,16 @@ export function EventTable({ rows, dispatch, onRun }: EventTableProps) {
       title="Event Log"
       subtitle="Source of truth for the next run — edit freely."
       headerRight={
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => dispatch({ type: "ADD_ROW" })} className="font-mono text-xs uppercase">
-            <Plus data-icon="inline-start" aria-hidden="true" />
-            Add Event
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={onRun} data-testid="run-handover" className="font-mono text-xs text-accent uppercase">
-            Run Handover
-          </Button>
-        </div>
+        <Button type="button" variant="outline" size="sm" onClick={() => dispatch({ type: "ADD_ROW" })} className="font-mono text-xs uppercase">
+          <Plus data-icon="inline-start" aria-hidden="true" />
+          Add Event
+        </Button>
       }
     >
       {rows.length === 0 ? (
         <EmptyState title="No events yet" description="Add an event to begin." testId="event-table-empty" />
       ) : (
-        <div className="overflow-x-auto border border-border">
+        <div className="overflow-x-auto border border-border [&_td]:h-9 [&_td]:py-1 [&_th]:h-8 [&_[data-slot=input]]:h-7 [&_[data-slot=select-trigger]]:h-7">
           <Table>
             <TableHeader>
               <TableRow>

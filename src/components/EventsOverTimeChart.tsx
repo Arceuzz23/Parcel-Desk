@@ -79,7 +79,7 @@ export function EventsOverTimeChart({ points }: EventsOverTimeChartProps) {
             wide and short, so the whole top status panel reads as one
             compact horizontal strip rather than letting the chart
             dominate the page vertically. */}
-        <AreaChart data={data} xDataKey="date" margin={CHART_MARGIN} aspectRatio="4.2 / 1" animationDuration={700}>
+        <AreaChart data={data} xDataKey="date" margin={CHART_MARGIN} aspectRatio="5.5 / 1" animationDuration={700}>
           <Grid horizontal rowTickValues={yTicks} strokeDasharray="3,3" />
           {SERIES.map((series) => (
             // curveLinear, not the Area component's curveMonotoneX

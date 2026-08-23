@@ -40,7 +40,7 @@ export function HandoverBoard({ result, selectedParcelId, onSelectParcel }: Hand
           the column boundary, not an unmount in one place and an
           unrelated mount in the other. */}
       <LayoutGroup>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           <BoardColumn
             label="Pending"
             tone="pending"
@@ -80,17 +80,15 @@ interface BoardColumnProps {
 function BoardColumn({ label, tone, parcels, emptyState, testId, selectedParcelId, onSelectParcel }: BoardColumnProps) {
   const toneClass = tone === "collected" ? "text-success" : "text-accent";
   return (
-    <div className="flex flex-col gap-3" data-testid={testId}>
-      <div className="flex items-baseline justify-between">
-        <h3 className={`font-mono text-xs font-semibold tracking-widest uppercase ${toneClass}`}>
-          {label} <span className="text-muted-foreground">({String(parcels.length).padStart(2, "0")})</span>
-        </h3>
-      </div>
+    <div className="flex flex-col gap-2" data-testid={testId}>
+      <h3 className={`font-mono text-xs font-semibold tracking-widest uppercase ${toneClass}`}>
+        {label} <span className="text-muted-foreground">({String(parcels.length).padStart(2, "0")})</span>
+      </h3>
 
       {parcels.length === 0 ? (
         emptyState
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-1.5">
           {/* AnimatePresence + a key on parcelId (stable across runs,
               unlike array index) is what lets Motion tell "this exact
               parcel is new" apart from "the list just re-rendered" — so

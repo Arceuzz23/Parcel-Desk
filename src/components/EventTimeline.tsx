@@ -52,7 +52,7 @@ export function EventTimeline({ result, selectedParcelId, onSelectParcel }: Even
             variants={staggerChildren(90)}
             initial="initial"
             animate="animate"
-            className="flex flex-wrap items-center gap-y-3"
+            className="flex flex-wrap items-center gap-y-2"
             data-testid="outcomes-list"
           >
             {result.outcomes.map((outcome, index) => (
@@ -64,7 +64,7 @@ export function EventTimeline({ result, selectedParcelId, onSelectParcel }: Even
                   onSelect={onSelectParcel}
                 />
                 {index < result.outcomes.length - 1 && (
-                  <span aria-hidden="true" className="mx-1.5 font-mono text-border-strong select-none">
+                  <span aria-hidden="true" className="mx-1 font-mono text-border-strong select-none">
                     →
                   </span>
                 )}
@@ -97,19 +97,19 @@ function TimelineNode({
       onClick={() => onSelect(outcome.event.parcelId)}
       aria-pressed={selected}
       className={cn(
-        "flex flex-col items-center gap-1.5 border bg-surface-raised px-2.5 py-2 text-left transition-[opacity,border-color] duration-150",
+        "flex flex-col items-center gap-1 border bg-surface-raised px-2 py-1.5 text-left transition-[opacity,border-color] duration-150",
         selected ? "border-accent" : isRejected ? "border-rejected/40" : "border-border hover:border-border-strong",
         dimmed ? "opacity-40" : "opacity-100",
       )}
     >
-      <span className="font-mono text-xs text-muted-foreground">
+      <span className="font-mono text-[11px] text-muted-foreground">
         {outcome.event.id} <span className="text-border-strong">·</span> {outcome.event.parcelId}
       </span>
       <OutcomeBadge outcome={outcome.outcome} />
       {isRejected ? (
-        <XCircle aria-hidden="true" className="size-4 text-rejected" strokeWidth={1.5} />
+        <XCircle aria-hidden="true" className="size-3.5 text-rejected" strokeWidth={1.5} />
       ) : (
-        <CheckCircle2 aria-hidden="true" className="size-4 text-success" strokeWidth={1.5} />
+        <CheckCircle2 aria-hidden="true" className="size-3.5 text-success" strokeWidth={1.5} />
       )}
     </button>
   );
@@ -143,11 +143,11 @@ function RejectionDetails({ result }: { result: HandoverResult }) {
   );
 
   return (
-    <div className="flex flex-col gap-2 border-t border-border pt-3">
+    <div className="flex flex-col gap-1.5 border-t border-border pt-2">
       <p className="font-mono text-xs font-semibold tracking-widest text-rejected uppercase">
         Rejected Events — State Unchanged
       </p>
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-1.5">
         {rejections.map((outcome) => {
           const parcel = knownParcels.get(outcome.event.parcelId);
           const isMismatch = outcome.outcome === "PICKUP_CODE_MISMATCH" && parcel;
@@ -155,7 +155,7 @@ function RejectionDetails({ result }: { result: HandoverResult }) {
           return (
             <li
               key={outcome.event.id}
-              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border border-rejected/25 bg-rejected/5 px-3 py-2 text-sm"
+              className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 border border-rejected/25 bg-rejected/5 px-2.5 py-1.5 text-sm"
             >
               <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="font-mono text-xs text-muted-foreground">{outcome.event.id}</span>

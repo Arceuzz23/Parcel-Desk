@@ -48,14 +48,14 @@ export function ParcelLabel({ parcelId, student, shelf, pickupCode, tone, select
       aria-pressed={selected}
       data-testid={`parcel-${parcelId}`}
       className={cn(
-        "group flex w-full items-center gap-3 border bg-surface-raised px-3 py-2 text-left transition-[opacity,border-color] duration-150",
+        "group flex w-full items-center gap-2 border bg-surface-raised px-2.5 py-1.5 text-left transition-[opacity,border-color] duration-150",
         selected ? "border-accent" : "border-border hover:border-border-strong",
         dimmed ? "opacity-40" : "opacity-100",
       )}
     >
       <Icon
         aria-hidden="true"
-        className={cn("size-6 shrink-0", tone === "collected" ? "text-success" : "text-accent")}
+        className={cn("size-5 shrink-0", tone === "collected" ? "text-success" : "text-accent")}
         strokeWidth={1.5}
       />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">

@@ -22,8 +22,8 @@ export interface PanelProps {
  */
 export function Panel({ title, subtitle, headerRight, children, className, testId, headingId }: PanelProps) {
   return (
-    <section aria-labelledby={headingId} className={cn("flex flex-col gap-4 border border-border bg-surface p-5", className)} data-testid={testId}>
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 border-b border-border-strong pb-3">
+    <section aria-labelledby={headingId} className={cn("flex flex-col gap-3 border border-border bg-surface p-4", className)} data-testid={testId}>
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-0.5 border-b border-border-strong pb-2">
         <div>
           <h2 id={headingId} className="font-mono text-sm font-semibold tracking-widest text-foreground uppercase">
             {title}

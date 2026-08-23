@@ -59,12 +59,12 @@ export function SummaryPanel({ result }: SummaryPanelProps) {
       variants={fadeInUp}
       initial="initial"
       animate="animate"
-      className="grid grid-cols-1 gap-6 border border-border bg-surface p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]"
+      className="grid grid-cols-1 gap-4 border border-border bg-surface p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center"
       aria-label="Handover status"
     >
       {/* Always one horizontal row of four — never a 2x2 grid — matching
           the editorial metric strip in reference/final-ui.png. */}
-      <div className="grid grid-cols-4 gap-x-4 gap-y-4 sm:gap-x-6">
+      <div className="grid grid-cols-4 gap-x-4 gap-y-2 sm:gap-x-6">
         {FIGURES.map((figure) => (
           <Figure
             key={figure.key}
@@ -77,7 +77,7 @@ export function SummaryPanel({ result }: SummaryPanelProps) {
         ))}
       </div>
 
-      <div className="flex flex-col gap-2 border-t border-border pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+      <div className="flex flex-col gap-1.5 border-t border-border pt-3 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-5">
         <div className="flex items-center justify-between">
           <h2 className="font-mono text-xs font-semibold tracking-widest text-muted-foreground uppercase">Events Over Time (Run)</h2>
           <ChartLegend />

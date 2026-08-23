@@ -55,18 +55,6 @@ export const popIn: Variants = {
 };
 
 /**
- * A pending parcel row: pops in on arrival (see `popIn`), and — when it
- * leaves the pending column because it was collected — slides/fades out to
- * the side rather than just disappearing, so the "handover" reads as a
- * transfer rather than a deletion.
- */
-export const pendingParcelItem: Variants = {
-  initial: { opacity: 0, scale: 0.96 },
-  animate: { opacity: 1, scale: 1, x: 0, transition: SPRING },
-  exit: { opacity: 0, x: 24, transition: { duration: 0.25 } },
-};
-
-/**
  * Stagger container — apply to a parent `motion.ul`/`motion.div` wrapping a
  * list of `popIn`/`fadeInUp` children so they cascade in one after another
  * instead of all appearing simultaneously.
@@ -76,16 +64,3 @@ export const staggerChildren = (staggerMs = 40): Variants => ({
     transition: { staggerChildren: staggerMs / 1000 },
   },
 });
-
-/**
- * True when the OS-level "reduce motion" preference is on. `MotionConfig
- * reducedMotion="user"` (src/app/App.tsx) already makes every motion.*
- * element skip its animated transition for these users — this export is
- * for the one place that ISN'T a motion.* element: App.tsx's "replay"
- * status timer (PROCESSING… / HANDOVER COMPLETE) is a plain setTimeout,
- * not a Motion animation, so it has to check this itself rather than
- * rely on MotionConfig to shorten it.
- */
-export function prefersReducedMotion(): boolean {
-  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
