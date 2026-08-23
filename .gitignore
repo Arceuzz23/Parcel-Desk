@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+*.tsbuildinfo
+coverage
+.env
+.env.*
+!.env.example
 
 # Playwright
 test-results
