@@ -19,3 +19,16 @@ if (typeof window !== "undefined" && !window.matchMedia) {
       dispatchEvent: () => false,
     }) as MediaQueryList;
 }
+
+// jsdom doesn't implement ResizeObserver either — @visx/responsive's
+// ParentSize (used by the Events Over Time chart, EventsOverTimeChart.tsx,
+// to size itself to its container) needs one to mount at all. A no-op
+// stub is enough for RTL: it never actually needs to observe real layout
+// in jsdom, just not throw.
+if (typeof window !== "undefined" && !window.ResizeObserver) {
+  window.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}

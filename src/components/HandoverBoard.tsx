@@ -1,8 +1,9 @@
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { EmptyState } from "@/components/EmptyState";
+import { Panel } from "@/components/Panel";
 import { ParcelLabel } from "@/components/ParcelLabel";
 import type { CollectedParcel, HandoverResult, PendingParcel } from "@/lib/types";
-import { fadeInUp, popIn } from "@/lib/motion";
+import { popIn } from "@/lib/motion";
 
 export interface HandoverBoardProps {
   /** See EventTimeline.tsx for the null-vs-empty-result distinction. */
@@ -25,34 +26,21 @@ export interface HandoverBoardProps {
 export function HandoverBoard({ result, selectedParcelId, onSelectParcel }: HandoverBoardProps) {
   if (result === null) {
     return (
-      <section aria-labelledby="board-heading" className="flex flex-col gap-4">
-        <BoardHeading />
-        <EmptyState
-          title="No result yet"
-          description="Run Handover to see the pending and collected board."
-          testId="board-pre-run"
-        />
-      </section>
+      <Panel headingId="board-heading" title="Handover Board" subtitle="Who's still on the shelf, who's been collected." testId="board-pre-run">
+        <EmptyState title="No result yet" description="Run Handover to see the pending and collected board." testId="board-pre-run-empty" />
+      </Panel>
     );
   }
 
   return (
-    <section aria-labelledby="board-heading" className="flex flex-col gap-4">
-      <BoardHeading />
-      {/* fadeInUp plays once when this branch first mounts — i.e. right
-          when a run produces a result — so the board visibly settles into
-          place as "the answer just arrived." LayoutGroup scopes the two
-          columns' ParcelLabel layoutIds together so a parcel moving from
-          Pending to Collected (a re-run where it's now correctly picked
-          up) animates as one continuous FLIP across the column boundary,
-          not an unmount in one place and an unrelated mount in the other. */}
+    <Panel headingId="board-heading" title="Handover Board" subtitle="Who's still on the shelf, who's been collected.">
+      {/* LayoutGroup scopes the two columns' ParcelLabel layoutIds together
+          so a parcel moving from Pending to Collected (a re-run where it's
+          now correctly picked up) animates as one continuous FLIP across
+          the column boundary, not an unmount in one place and an
+          unrelated mount in the other. */}
       <LayoutGroup>
-        <motion.div
-          variants={fadeInUp}
-          initial="initial"
-          animate="animate"
-          className="grid gap-px overflow-hidden border border-border bg-border sm:grid-cols-2"
-        >
+        <div className="grid gap-4 sm:grid-cols-2">
           <BoardColumn
             label="Pending"
             tone="pending"
@@ -73,28 +61,9 @@ export function HandoverBoard({ result, selectedParcelId, onSelectParcel }: Hand
             selectedParcelId={selectedParcelId}
             onSelectParcel={onSelectParcel}
           />
-        </motion.div>
+        </div>
       </LayoutGroup>
-    </section>
-  );
-}
-
-/**
- * Deliberately larger than every other section heading in the app
- * (mono, wide letter-spacing) — the Handover Board is the operational
- * output of the whole screen, so it gets the one heading treatment that
- * visually outranks everything else, including its own column labels.
- */
-function BoardHeading() {
-  return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-border-strong pb-2">
-      <div>
-        <h2 id="board-heading" className="font-mono text-lg font-semibold tracking-wide text-foreground uppercase">
-          Handover Board
-        </h2>
-        <p className="text-sm text-muted-foreground">Who&#39;s still on the shelf, who&#39;s been collected.</p>
-      </div>
-    </div>
+    </Panel>
   );
 }
 
@@ -109,11 +78,13 @@ interface BoardColumnProps {
 }
 
 function BoardColumn({ label, tone, parcels, emptyState, testId, selectedParcelId, onSelectParcel }: BoardColumnProps) {
+  const toneClass = tone === "collected" ? "text-success" : "text-accent";
   return (
-    <div className="flex flex-col gap-3 bg-background p-4" data-testid={testId}>
+    <div className="flex flex-col gap-3" data-testid={testId}>
       <div className="flex items-baseline justify-between">
-        <h3 className="font-mono text-xs font-semibold tracking-widest text-muted-foreground uppercase">{label}</h3>
-        <span className="font-mono text-xs text-muted-foreground">{String(parcels.length).padStart(2, "0")}</span>
+        <h3 className={`font-mono text-xs font-semibold tracking-widest uppercase ${toneClass}`}>
+          {label} <span className="text-muted-foreground">({String(parcels.length).padStart(2, "0")})</span>
+        </h3>
       </div>
 
       {parcels.length === 0 ? (

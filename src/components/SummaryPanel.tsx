@@ -1,8 +1,8 @@
 import NumberFlow from "@number-flow/react";
 import { motion } from "motion/react";
-import { HandoverChart } from "@/components/HandoverChart";
+import { EventsOverTimeChart } from "@/components/EventsOverTimeChart";
 import type { HandoverResult } from "@/lib/types";
-import { getSummary } from "@/lib/selectors";
+import { getEventsOverTime, getSummary } from "@/lib/selectors";
 import { fadeInUp } from "@/lib/motion";
 
 export interface SummaryPanelProps {
@@ -11,27 +11,30 @@ export interface SummaryPanelProps {
    *  than a summary prop) means this component, not its caller, decides
    *  when it's meaningful to call getSummary() at all. */
   result: HandoverResult | null;
-  /** Purely cosmetic "is the replay animation currently playing" status —
-   *  see App.tsx. Not part of the app's real state model. */
-  runStatus: "idle" | "processing" | "complete";
 }
 
 const NUMBER_FORMAT = { minimumIntegerDigits: 2 };
 
+const FIGURES = [
+  { key: "pending", label: "Pending", description: "Parcels waiting" },
+  { key: "collected", label: "Collected", description: "Successfully collected" },
+  { key: "rejected", label: "Rejected", description: "Events rejected" },
+  { key: "events", label: "Events", description: "Total processed" },
+] as const;
+
 /**
- * A typographic operational summary — large zero-padded numbers, small
- * caps labels, no card containers (item 4 of the redesign brief). Four
- * figures, not three: Pending / Collected / Rejected / Events. The fourth
- * one (Events = every outcome this run produced, rejections included) is
- * what keeps the retained Bklit chart honest — that ring only ever shows
- * the pending/collected SPLIT, so without an explicit total sitting right
- * next to it, "4" could misread as "4 events happened" when a run has
- * rejections (the canonical oracle: 6 events, 1 rejected, board total 4).
- * With "06 EVENTS" printed right here, there's no ambiguity left to read
- * into the chart.
+ * The top status strip: four large editorial figures on the left, the
+ * Events Over Time chart on the right, sharing one bordered panel. No
+ * section heading — the figures speak for themselves, and a label like
+ * "Handover Status" above them would just repeat what "Pending/Collected/
+ * Rejected/Events" already say directly underneath each number.
  *
- * `result.outcomes.length` (not a new HandoverSummary field) is the event
- * count — no src/lib/ change needed, it's already on HandoverResult.
+ * The fourth figure (Events = every outcome this run produced, rejections
+ * included) is what keeps the chart honest — the chart's own pending/
+ * collected/rejected lines already show all three series explicitly (see
+ * EventsOverTimeChart.tsx), but "06 EVENTS" printed here removes any
+ * remaining doubt about how many events this run actually processed.
+ * `result.outcomes.length` is read directly — no new HandoverSummary field.
  *
  * Critical distinction (acceptance test 6, docs/DECISIONS.md): when
  * `result` is `null` (no run yet / just reset), figures show "—" rather
@@ -39,74 +42,103 @@ const NUMBER_FORMAT = { minimumIntegerDigits: 2 };
  * instead. Collapsing those two into the same "0" would make Reset and
  * "ran on an empty table" visually identical, which the spec forbids.
  */
-export function SummaryPanel({ result, runStatus }: SummaryPanelProps) {
+export function SummaryPanel({ result }: SummaryPanelProps) {
   const summary = result === null ? null : getSummary(result);
   const totalEvents = result === null ? undefined : result.outcomes.length;
-  const boardTotal = summary === null ? 0 : summary.pending + summary.collected;
+  const eventsOverTime = result === null ? [] : getEventsOverTime(result);
+
+  const values: Record<(typeof FIGURES)[number]["key"], number | undefined> = {
+    pending: summary?.pending,
+    collected: summary?.collected,
+    rejected: summary?.rejected,
+    events: totalEvents,
+  };
 
   return (
-    <section aria-labelledby="summary-heading" className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <h2 id="summary-heading" className="font-mono text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-          Handover Status
-        </h2>
-        {/* "Replay" status — see App.tsx for how this is timed. A live
-            region so screen reader users get "processing"/"complete" as an
-            announcement, not just a color/text change they'd have to be
-            looking at the right moment to see. */}
-        <span aria-live="polite" data-testid="run-status" className="font-mono text-[11px] tracking-widest uppercase">
-          {runStatus === "processing" && <span className="animate-pulse text-accent">● Processing</span>}
-          {runStatus === "complete" && <span className="text-success">✓ Handover Complete</span>}
-        </span>
+    <motion.div
+      variants={fadeInUp}
+      initial="initial"
+      animate="animate"
+      className="grid grid-cols-1 gap-6 border border-border bg-surface p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]"
+      aria-label="Handover status"
+    >
+      <div className="grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4 lg:grid-cols-2">
+        {FIGURES.map((figure) => (
+          <Figure
+            key={figure.key}
+            value={values[figure.key]}
+            label={figure.label}
+            description={figure.description}
+            tone={figure.key === "rejected" ? "rejected" : figure.key === "collected" ? "success" : figure.key === "pending" ? "accent" : "default"}
+            testId={`summary-${figure.key}`}
+          />
+        ))}
       </div>
-      <motion.div
-        variants={fadeInUp}
-        initial="initial"
-        animate="animate"
-        className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6 border-b border-border-strong pb-6"
-      >
-        <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
-          <Figure value={summary?.pending} label="Pending" testId="summary-pending" />
-          <Figure value={summary?.collected} label="Collected" testId="summary-collected" />
-          <Figure value={summary?.rejected} label="Rejected" tone="rejected" testId="summary-rejected" />
-          <Figure value={totalEvents} label="Events" testId="summary-events" />
-        </div>
 
-        {/* Chart earns its place only once there's something to compare —
-            an empty or pre-run board renders no rings, not a hollow one. */}
-        {summary !== null && boardTotal > 0 && (
-          <div className="flex items-center gap-3">
-            <HandoverChart summary={summary} />
-            <p className="max-w-[6rem] text-xs text-muted-foreground">Pending / Collected split of the board</p>
-          </div>
-        )}
-      </motion.div>
-    </section>
+      <div className="flex flex-col gap-2 border-t border-border pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+        <div className="flex items-center justify-between">
+          <h2 className="font-mono text-xs font-semibold tracking-widest text-muted-foreground uppercase">Events Over Time (Run)</h2>
+          <ChartLegend />
+        </div>
+        <EventsOverTimeChart points={eventsOverTime} />
+      </div>
+    </motion.div>
+  );
+}
+
+function ChartLegend() {
+  const items = [
+    { label: "Pending", color: "bg-accent" },
+    { label: "Collected", color: "bg-success" },
+    { label: "Rejected", color: "bg-rejected" },
+  ];
+  return (
+    <ul className="flex gap-3">
+      {items.map((item) => (
+        <li key={item.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span aria-hidden="true" className={`size-1.5 rounded-full ${item.color}`} />
+          {item.label}
+        </li>
+      ))}
+    </ul>
   );
 }
 
 function Figure({
   value,
   label,
-  tone = "default",
+  description,
+  tone,
   testId,
 }: {
   value: number | undefined;
   label: string;
-  tone?: "default" | "rejected";
+  description: string;
+  tone: "default" | "accent" | "success" | "rejected";
   testId: string;
 }) {
+  const toneClass =
+    value === undefined
+      ? "text-foreground"
+      : tone === "accent"
+        ? "text-accent"
+        : tone === "success"
+          ? "text-success"
+          : tone === "rejected"
+            ? "text-rejected"
+            : "text-foreground";
+
   return (
     <div data-testid={testId} className="flex flex-col gap-0.5">
-      <span
-        className={
-          "font-mono text-4xl leading-none font-semibold tabular-nums sm:text-5xl " +
-          (tone === "rejected" && value ? "text-rejected" : "text-foreground")
-        }
-      >
-        {value === undefined ? <span aria-label={`${label}: not run yet`}>—</span> : <NumberFlow value={value} format={NUMBER_FORMAT} aria-label={`${label}: ${value}`} />}
+      <span className={`font-mono text-4xl leading-none font-bold tabular-nums ${toneClass}`}>
+        {value === undefined ? (
+          <span aria-label={`${label}: not run yet`}>—</span>
+        ) : (
+          <NumberFlow value={value} format={NUMBER_FORMAT} aria-label={`${label}: ${value}`} />
+        )}
       </span>
-      <span className="font-mono text-xs tracking-widest text-muted-foreground uppercase">{label}</span>
+      <span className={`font-mono text-xs font-semibold tracking-widest uppercase ${toneClass}`}>{label}</span>
+      <span className="text-xs text-muted-foreground">{description}</span>
     </div>
   );
 }

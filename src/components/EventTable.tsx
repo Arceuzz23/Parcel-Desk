@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/EmptyState";
+import { Panel } from "@/components/Panel";
 import type { AppAction, EditableEventRow } from "@/app/appReducer";
 import { EVENT_ACTIONS } from "@/lib/constants";
 import type { EventInput } from "@/lib/types";
@@ -12,61 +13,64 @@ import type { EventInput } from "@/lib/types";
 export interface EventTableProps {
   rows: EditableEventRow[];
   dispatch: Dispatch<AppAction>;
+  onRun: () => void;
 }
 
 /**
  * The editable event log — an editing mechanism, not the visual hero (see
- * the render order in App.tsx: the Handover Board and Shelf Map come
- * first, this comes last). It owns NO domain logic of its own: every
- * keystroke just dispatches UPDATE_FIELD, and the actual ARRIVE/COLLECT
- * rules live entirely in src/lib/. That separation is what let the domain
- * engine ship (and get fully tested) in Phase 2-6 before any of this UI
- * existed, and it's also why this component can be visually de-emphasized
- * without touching a single line of its logic — restyling it here changes
- * nothing about what Run Handover actually computes.
+ * the render order in App.tsx: the Handover Board, Shelf Map, and Event
+ * Timeline come first, this comes last, in its own column). It owns NO
+ * domain logic of its own: every keystroke just dispatches UPDATE_FIELD,
+ * and the actual ARRIVE/COLLECT rules live entirely in src/lib/. That
+ * separation is what let the domain engine ship (and get fully tested) in
+ * Phase 2-6 before any of this UI existed, and it's also why this
+ * component can be visually de-emphasized without touching a single line
+ * of its logic — restyling it here changes nothing about what Run
+ * Handover actually computes.
+ *
+ * `onRun` (not a raw `dispatch({ type: "RUN" })` here) is the same
+ * callback the header's Run Handover button uses (see App.tsx) — one RUN
+ * code path, two entry points into it.
  *
  * Columns, per the spec: # | Event ID | Action | Parcel ID | Student |
  * Pickup Code | Shelf | Actions.
  */
-export function EventTable({ rows, dispatch }: EventTableProps) {
+export function EventTable({ rows, dispatch, onRun }: EventTableProps) {
   function updateField(key: string, field: keyof EventInput, value: string) {
     dispatch({ type: "UPDATE_FIELD", key, field, value });
   }
 
   return (
-    <section aria-labelledby="event-table-heading" className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 id="event-table-heading" className="font-mono text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-            Event Log
-          </h2>
-          <p className="text-xs text-muted-foreground">Source of truth for the next run — edit freely, nothing here is final until you Run Handover.</p>
-        </div>
+    <Panel
+      headingId="event-table-heading"
+      title="Event Log"
+      subtitle="Source of truth for the next run — edit freely."
+      headerRight={
         <div className="flex gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => dispatch({ type: "ADD_ROW" })} className="font-mono text-xs uppercase">
             <Plus data-icon="inline-start" aria-hidden="true" />
             Add Event
           </Button>
-          <Button type="button" size="sm" onClick={() => dispatch({ type: "RUN" })} data-testid="run-handover" className="font-mono text-xs uppercase">
+          <Button type="button" variant="outline" size="sm" onClick={onRun} data-testid="run-handover" className="font-mono text-xs text-accent uppercase">
             Run Handover
           </Button>
         </div>
-      </div>
-
+      }
+    >
       {rows.length === 0 ? (
         <EmptyState title="No events yet" description="Add an event to begin." testId="event-table-empty" />
       ) : (
-        <div className="border border-border">
+        <div className="overflow-x-auto border border-border">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10">#</TableHead>
-                <TableHead>Event ID</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Parcel ID</TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Pickup Code</TableHead>
-                <TableHead>Shelf</TableHead>
+                <TableHead className="w-10 font-mono text-xs tracking-wider uppercase">#</TableHead>
+                <TableHead className="font-mono text-xs tracking-wider uppercase">ID</TableHead>
+                <TableHead className="font-mono text-xs tracking-wider uppercase">Action</TableHead>
+                <TableHead className="font-mono text-xs tracking-wider uppercase">Parcel</TableHead>
+                <TableHead className="font-mono text-xs tracking-wider uppercase">Student</TableHead>
+                <TableHead className="font-mono text-xs tracking-wider uppercase">Pickup Code</TableHead>
+                <TableHead className="font-mono text-xs tracking-wider uppercase">Shelf</TableHead>
                 <TableHead className="w-10 text-right">
                   <span className="sr-only">Row actions</span>
                 </TableHead>
@@ -75,14 +79,14 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
             <TableBody>
               {rows.map((row, index) => (
                 <TableRow key={row.key} data-testid={`event-row-${index + 1}`}>
-                  <TableCell className="text-muted-foreground">{index + 1}</TableCell>
+                  <TableCell className="font-mono text-muted-foreground">{index + 1}</TableCell>
 
                   <TableCell>
                     <Input
                       aria-label={`Row ${index + 1} Event ID`}
                       value={row.data.id}
                       onChange={(event) => updateField(row.key, "id", event.target.value)}
-                      className="min-w-24"
+                      className="min-w-24 font-mono"
                     />
                   </TableCell>
 
@@ -100,12 +104,12 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
                       value={row.data.action}
                       onValueChange={(value) => updateField(row.key, "action", String(value))}
                     >
-                      <SelectTrigger aria-label={`Row ${index + 1} Action`} className="w-28">
+                      <SelectTrigger aria-label={`Row ${index + 1} Action`} className="w-28 font-mono">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {EVENT_ACTIONS.map((action) => (
-                          <SelectItem key={action} value={action}>
+                          <SelectItem key={action} value={action} className="font-mono">
                             {action}
                           </SelectItem>
                         ))}
@@ -118,7 +122,7 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
                       aria-label={`Row ${index + 1} Parcel ID`}
                       value={row.data.parcelId}
                       onChange={(event) => updateField(row.key, "parcelId", event.target.value)}
-                      className="min-w-20"
+                      className="min-w-20 font-mono"
                     />
                   </TableCell>
 
@@ -127,7 +131,7 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
                       aria-label={`Row ${index + 1} Student`}
                       value={row.data.student}
                       onChange={(event) => updateField(row.key, "student", event.target.value)}
-                      placeholder={row.data.action === "COLLECT" ? "(not required)" : undefined}
+                      placeholder={row.data.action === "COLLECT" ? "–" : undefined}
                       className="min-w-24"
                     />
                   </TableCell>
@@ -147,8 +151,8 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
                       aria-label={`Row ${index + 1} Shelf`}
                       value={row.data.shelf}
                       onChange={(event) => updateField(row.key, "shelf", event.target.value)}
-                      placeholder={row.data.action === "COLLECT" ? "(not required)" : undefined}
-                      className="min-w-16"
+                      placeholder={row.data.action === "COLLECT" ? "–" : undefined}
+                      className="min-w-16 font-mono"
                     />
                   </TableCell>
 
@@ -169,6 +173,6 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
           </Table>
         </div>
       )}
-    </section>
+    </Panel>
   );
 }

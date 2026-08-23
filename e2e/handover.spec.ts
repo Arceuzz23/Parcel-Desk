@@ -44,7 +44,7 @@ async function expectColumnParcelIds(page: Page, testId: string, expectedIds: st
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Operations Console" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Parcel Desk" })).toBeVisible();
 });
 
 test("1. built-in fixture matches the canonical oracle", async ({ page }) => {

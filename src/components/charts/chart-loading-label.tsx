@@ -1,0 +1,61 @@
+"use client";
+
+import { motion } from "motion/react";
+import { cn } from "@/lib/utils";
+// Registry path fix: the bklit `add area-chart` package ships this import
+// as "../components/shimmering-text", which resolves to a nonexistent
+// src/components/charts/components/shimmering-text.tsx. The actual file
+// lands one level up (src/components/shimmering-text.tsx, installed by
+// `add shimmering-text` separately) — corrected to "../shimmering-text".
+import { ShimmeringText } from "../shimmering-text";
+import {
+  LINE_LOADING_PULSE_EASE,
+  LOADING_LABEL_EXIT_S,
+  LOADING_LABEL_EXIT_Y_PX,
+} from "./line-loading-timing";
+
+export interface ChartLoadingLabelProps {
+  /** Label shown centered over the chart. */
+  text?: string;
+  className?: string;
+  /** Animate down, fade, and blur during loading → ready handoff. */
+  exiting?: boolean;
+}
+
+export function ChartLoadingLabel({
+  text = "Loading",
+  className,
+  exiting = false,
+}: ChartLoadingLabelProps) {
+  if (!text.trim()) {
+    return null;
+  }
+
+  return (
+    <motion.div
+      animate={{
+        y: exiting ? LOADING_LABEL_EXIT_Y_PX : 0,
+        opacity: exiting ? 0 : 1,
+        filter: exiting ? "blur(2px)" : "blur(0px)",
+      }}
+      aria-live="polite"
+      className={cn(
+        "pointer-events-none absolute inset-0 flex items-center justify-center",
+        className
+      )}
+      initial={false}
+      role="status"
+      transition={{
+        duration: LOADING_LABEL_EXIT_S,
+        ease: [...LINE_LOADING_PULSE_EASE],
+      }}
+    >
+      <ShimmeringText
+        className="font-medium text-sm tracking-wide [--color:var(--muted-foreground)] [--shimmering-color:var(--foreground)]"
+        text={text}
+      />
+    </motion.div>
+  );
+}
+
+export default ChartLoadingLabel;

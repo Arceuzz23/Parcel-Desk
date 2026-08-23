@@ -7,16 +7,16 @@ import { EventTimeline } from "@/components/EventTimeline";
 import { HandoverBoard } from "@/components/HandoverBoard";
 import { SummaryPanel } from "@/components/SummaryPanel";
 import { ShelfMap } from "@/components/ShelfMap";
+import { Footer } from "@/components/Footer";
 import { appReducer, createInitialState } from "@/app/appReducer";
 import { prefersReducedMotion } from "@/lib/motion";
 import type { HandoverResult } from "@/lib/types";
 
-/** How long the "PROCESSING…" status shows before flipping to "HANDOVER
- *  COMPLETE" — sized to roughly match the Event Timeline's own stagger
- *  reveal (90ms/event + a spring's settle time) so the status line and the
- *  actual on-screen animation finish together. Not derived programmatically
- *  from Motion's own timing (see the comment in the effect below for why),
- *  but bounded so it never reads as sluggish even on a long event log. */
+/** How long the timeline's stagger reveal takes before the footer's status
+ *  flips from "Processing…" to "Handover complete." — sized to roughly
+ *  match the Event Timeline's own stagger (90ms/event + a spring's settle
+ *  time), bounded so it never reads as sluggish on a long event log. Not
+ *  derived from Motion's own timing (see the effect below for why). */
 function replayDurationMs(outcomeCount: number): number {
   if (prefersReducedMotion()) {
     // Nothing is visually animating for these users — see MotionConfig
@@ -25,9 +25,6 @@ function replayDurationMs(outcomeCount: number): number {
   }
   return Math.min(1800, 450 + Math.max(0, outcomeCount - 1) * 90);
 }
-
-/** How long "HANDOVER COMPLETE" stays up before the status line clears. */
-const COMPLETE_HOLD_MS = 1400;
 
 /**
  * Root component. This is the ONLY place *application* state lives (one
@@ -38,12 +35,14 @@ const COMPLETE_HOLD_MS = 1400;
  * so it stays local rather than being threaded through the app's one real
  * state machine.
  *
- * Render order mirrors the redesign's information hierarchy — the
- * Handover Board is the visual hero, the editable table is a utility at
- * the bottom, not the other way around:
+ * Render order mirrors the reference design's hierarchy — the Handover
+ * Board is the visual hero, the editable table is a persistent utility
+ * column, not the primary focus:
  *
- *   Header → Handover Status (Summary) → Handover Board / Shelf Map
- *     → Event Timeline → Validation → Editable Event Log
+ *   Header
+ *     -> Handover Status (figures + Events Over Time chart)
+ *     -> [ Handover Board / Shelf Map / Event Timeline ]  |  [ Event Log ]
+ *   Footer
  *
  * `state.rows` (editable input) and `state.lastResult` (last processed
  * output) are two independent pieces of reducer state on purpose: editing
@@ -54,7 +53,13 @@ const COMPLETE_HOLD_MS = 1400;
  */
 function App() {
   const [state, dispatch] = useReducer(appReducer, undefined, createInitialState);
-  const [runStatus, setRunStatus] = useState<"idle" | "processing" | "complete">("idle");
+  // Only the TIMING half of runStatus needs its own state — "is the
+  // post-run reveal still playing." The "idle" half is derived straight
+  // from state.lastResult during render just below (no effect needed:
+  // null is unambiguously idle regardless of this flag), and the
+  // "processing" half is set directly from the click handler that causes
+  // it (handleRun), not detected after the fact in an effect.
+  const [isProcessing, setIsProcessing] = useState(false);
   const previousResultRef = useRef<HandoverResult | null>(null);
 
   // Detects "a run just succeeded" by watching for lastResult becoming a
@@ -70,17 +75,22 @@ function App() {
   useEffect(() => {
     if (state.lastResult !== null && state.lastResult !== previousResultRef.current) {
       previousResultRef.current = state.lastResult;
-      setRunStatus("processing");
-      const outcomeCount = state.lastResult.outcomes.length;
-      const toComplete = setTimeout(() => setRunStatus("complete"), replayDurationMs(outcomeCount));
-      const toIdle = setTimeout(() => setRunStatus("idle"), replayDurationMs(outcomeCount) + COMPLETE_HOLD_MS);
-      return () => {
-        clearTimeout(toComplete);
-        clearTimeout(toIdle);
-      };
+      const toComplete = setTimeout(() => setIsProcessing(false), replayDurationMs(state.lastResult.outcomes.length));
+      return () => clearTimeout(toComplete);
     }
     previousResultRef.current = state.lastResult;
   }, [state.lastResult]);
+
+  // lastResult === null (fresh load, Reset, or a failed validation) always
+  // means "idle" immediately, regardless of `isProcessing` — there is
+  // nothing to wait out in that case, so this takes priority over it.
+  const runStatus: "idle" | "processing" | "complete" =
+    state.lastResult === null ? "idle" : isProcessing ? "processing" : "complete";
+
+  function handleRun() {
+    setIsProcessing(true);
+    dispatch({ type: "RUN" });
+  }
 
   function handleSelectParcel(parcelId: string) {
     dispatch({ type: "SELECT_PARCEL", parcelId });
@@ -94,34 +104,24 @@ function App() {
     // single point where that policy is applied; individual components
     // never need their own reduced-motion checks.
     <MotionConfig reducedMotion="user">
-      <div className="mx-auto flex min-h-svh w-full max-w-5xl flex-col gap-10 px-4 py-8 sm:px-6 lg:px-8">
-        <Header onReset={() => dispatch({ type: "RESET" })} />
+      <div className="mx-auto flex min-h-svh w-full max-w-[1600px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+        <Header onRun={handleRun} onReset={() => dispatch({ type: "RESET" })} />
 
-        <SummaryPanel result={state.lastResult} runStatus={runStatus} />
+        <SummaryPanel result={state.lastResult} />
 
-        <div className="flex flex-col gap-6">
-          <HandoverBoard
-            result={state.lastResult}
-            selectedParcelId={state.selectedParcelId}
-            onSelectParcel={handleSelectParcel}
-          />
-          <ShelfMap
-            result={state.lastResult}
-            selectedParcelId={state.selectedParcelId}
-            onSelectParcel={handleSelectParcel}
-          />
+        <ValidationBanner errors={state.validationErrors} />
+
+        <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div className="flex flex-col gap-6">
+            <HandoverBoard result={state.lastResult} selectedParcelId={state.selectedParcelId} onSelectParcel={handleSelectParcel} />
+            <ShelfMap result={state.lastResult} selectedParcelId={state.selectedParcelId} onSelectParcel={handleSelectParcel} />
+            <EventTimeline result={state.lastResult} selectedParcelId={state.selectedParcelId} onSelectParcel={handleSelectParcel} />
+          </div>
+
+          <EventTable rows={state.rows} dispatch={dispatch} onRun={handleRun} />
         </div>
 
-        <EventTimeline
-          result={state.lastResult}
-          selectedParcelId={state.selectedParcelId}
-          onSelectParcel={handleSelectParcel}
-        />
-
-        <div className="flex flex-col gap-3 border-t border-border-strong pt-8">
-          <ValidationBanner errors={state.validationErrors} />
-          <EventTable rows={state.rows} dispatch={dispatch} />
-        </div>
+        <Footer runStatus={runStatus} />
       </div>
     </MotionConfig>
   );

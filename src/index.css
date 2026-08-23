@@ -102,8 +102,34 @@
   --status-rejected: var(--rejected);
   --status-rejected-foreground: var(--rejected-foreground);
 
+  /* Bklit area-chart tokens (src/components/charts/) — `npx shadcn add
+     @bklit/area-chart` seeds these with a light-mode palette plus a
+     redundant `.dark{}` override block for its own light/dark toggle
+     scheme, neither of which applies here (this app commits to one dark
+     theme — see the OPERATIONS CONSOLE PALETTE comment above). Every value
+     below is instead mapped onto the SAME tokens already defined above
+     (--surface, --foreground, --border, --accent, --success, --rejected),
+     not a second parallel palette, so the chart reads as part of the same
+     surface as everything else rather than an embedded widget with its
+     own theme. --chart-1/2/3 are Pending/Collected/Rejected, in that
+     order, matching the Area components' series order in
+     EventsOverTimeChart.tsx. */
   --chart-1: var(--accent);
   --chart-2: var(--success);
+  --chart-3: var(--rejected);
+  --chart-background: var(--surface);
+  --chart-foreground: var(--foreground);
+  --chart-foreground-muted: var(--muted-foreground);
+  --chart-line-primary: var(--chart-1);
+  --chart-line-secondary: var(--chart-2);
+  --chart-crosshair: var(--border-strong);
+  --chart-grid: var(--border);
+  --chart-brush-border: var(--border-strong);
+  --chart-tooltip-background: var(--surface-raised);
+  --chart-marker-background: var(--surface-raised);
+  --chart-marker-border: var(--border-strong);
+  --chart-marker-foreground: var(--foreground);
+  --chart-label: var(--muted-foreground);
 }
 
 @theme inline {
@@ -159,6 +185,18 @@
      same "console" register as the data itself. */
   --font-sans: "Geist Variable", system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, "Cascadia Code", monospace;
+
+  --color-chart-label: var(--chart-label);
+  --color-chart-marker-foreground: var(--chart-marker-foreground);
+  --color-chart-marker-border: var(--chart-marker-border);
+  --color-chart-marker-background: var(--chart-marker-background);
+  --color-chart-tooltip-background: var(--chart-tooltip-background);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-crosshair: var(--chart-crosshair);
+  --color-chart-foreground-muted: var(--chart-foreground-muted);
+  --color-chart-foreground: var(--chart-foreground);
+  --color-chart-background: var(--chart-background);
+  --color-chart-3: var(--chart-3);
 }
 
 @layer base {
