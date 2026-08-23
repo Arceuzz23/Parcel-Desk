@@ -1,3 +1,4 @@
+import { curveLinear } from "@visx/curve";
 import { AreaChart } from "@/components/charts/area-chart";
 import { Grid } from "@/components/charts/grid";
 import { Area } from "@/components/charts/area";
@@ -27,7 +28,7 @@ const SERIES = [
 // actual meaningful work here: the area/line rendering, gradients, and
 // grid.
 const SYNTHETIC_DAY_MS = 24 * 60 * 60 * 1000;
-const CHART_MARGIN = { top: 16, right: 12, bottom: 8, left: 12 };
+const CHART_MARGIN = { top: 10, right: 12, bottom: 4, left: 12 };
 
 /**
  * "Events Over Time (Run)" — a running tally of pending/collected/rejected
@@ -74,10 +75,28 @@ export function EventsOverTimeChart({ points }: EventsOverTimeChartProps) {
               <span key={tick}>{tick}</span>
             ))}
         </div>
-        <AreaChart data={data} xDataKey="date" margin={CHART_MARGIN} aspectRatio="2.6 / 1" animationDuration={700}>
+        {/* aspectRatio (not a fixed pixel height) keeps this responsive —
+            wide and short, so the whole top status panel reads as one
+            compact horizontal strip rather than letting the chart
+            dominate the page vertically. */}
+        <AreaChart data={data} xDataKey="date" margin={CHART_MARGIN} aspectRatio="4.2 / 1" animationDuration={700}>
           <Grid horizontal rowTickValues={yTicks} strokeDasharray="3,3" />
           {SERIES.map((series) => (
-            <Area key={series.key} dataKey={series.key} stroke={series.color} fill={series.color} fillOpacity={0.18} strokeWidth={2} />
+            // curveLinear, not the Area component's curveMonotoneX
+            // default: events are discrete state transitions, not a
+            // continuous quantity, so straight segments between points is
+            // the honest representation — a smoothed spline would imply
+            // in-between values that were never actually true at any
+            // moment.
+            <Area
+              key={series.key}
+              dataKey={series.key}
+              stroke={series.color}
+              fill={series.color}
+              fillOpacity={0.18}
+              strokeWidth={2}
+              curve={curveLinear}
+            />
           ))}
         </AreaChart>
       </div>

@@ -59,10 +59,12 @@ export function SummaryPanel({ result }: SummaryPanelProps) {
       variants={fadeInUp}
       initial="initial"
       animate="animate"
-      className="grid grid-cols-1 gap-6 border border-border bg-surface p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]"
+      className="grid grid-cols-1 gap-6 border border-border bg-surface p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]"
       aria-label="Handover status"
     >
-      <div className="grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4 lg:grid-cols-2">
+      {/* Always one horizontal row of four — never a 2x2 grid — matching
+          the editorial metric strip in reference/final-ui.png. */}
+      <div className="grid grid-cols-4 gap-x-4 gap-y-4 sm:gap-x-6">
         {FIGURES.map((figure) => (
           <Figure
             key={figure.key}
@@ -130,7 +132,7 @@ function Figure({
 
   return (
     <div data-testid={testId} className="flex flex-col gap-0.5">
-      <span className={`font-mono text-4xl leading-none font-bold tabular-nums ${toneClass}`}>
+      <span className={`font-mono text-2xl leading-none font-bold tabular-nums sm:text-3xl lg:text-4xl ${toneClass}`}>
         {value === undefined ? (
           <span aria-label={`${label}: not run yet`}>—</span>
         ) : (
