@@ -1,9 +1,26 @@
+import { lazy, Suspense } from "react";
 import NumberFlow from "@number-flow/react";
 import { motion } from "motion/react";
-import { EventsOverTimeChart } from "@/components/EventsOverTimeChart";
+import { EmptyState } from "@/components/EmptyState";
 import type { HandoverResult } from "@/lib/types";
 import { getEventsOverTime, getSummary } from "@/lib/selectors";
 import { fadeInUp } from "@/lib/motion";
+
+/**
+ * Lazy, not a static import — see docs/DECISIONS.md's bundle-size entry.
+ * EventsOverTimeChart pulls in Bklit's area-chart machinery plus its d3/
+ * visx dependency chain (~94 kB minified), and that weight is genuinely
+ * unused until a run actually exists: pre-run, this panel renders the
+ * static EmptyState below instead of mounting the chart at all, so the
+ * chart chunk is never fetched on first load — only once `result` first
+ * becomes non-null (i.e. after the user clicks Run Handover). This is a
+ * real deferral, not just a cosmetic chunk split: gating render on
+ * `result !== null` (below) is what makes it one, since React.lazy() only
+ * defers a module's fetch until the component is actually asked to render.
+ */
+const EventsOverTimeChart = lazy(() =>
+  import("@/components/EventsOverTimeChart").then((module) => ({ default: module.EventsOverTimeChart })),
+);
 
 export interface SummaryPanelProps {
   /** See EventTimeline.tsx for why this is `HandoverResult | null`, not a
@@ -82,7 +99,23 @@ export function SummaryPanel({ result }: SummaryPanelProps) {
           <h2 className="font-mono text-xs font-semibold tracking-widest text-muted-foreground uppercase">Events Over Time (Run)</h2>
           <ChartLegend />
         </div>
-        <EventsOverTimeChart points={eventsOverTime} />
+        {result === null ? (
+          // Pre-run: a plain EmptyState (already loaded — every panel uses
+          // it) instead of mounting the lazy chart, so nothing under
+          // EventsOverTimeChart is ever fetched until there's a result to
+          // plot. Once `result` exists, an empty-run (0 events) still
+          // renders the lazy chart below — its own internal empty-state
+          // branch handles that case, same as before this change.
+          <EmptyState
+            title="No result yet"
+            description="Run Handover to see events plotted over the run."
+            testId="events-over-time-pre-run"
+          />
+        ) : (
+          <Suspense fallback={<EmptyState title="Loading chart…" description="Just a moment." testId="events-over-time-loading" />}>
+            <EventsOverTimeChart points={eventsOverTime} />
+          </Suspense>
+        )}
       </div>
     </motion.div>
   );

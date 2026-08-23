@@ -13,6 +13,27 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // React + its runtime helpers (react-dom, scheduler,
+        // use-sync-external-store) are ~180 kB on their own — pulled into
+        // their own chunk so they change (and get re-downloaded) far less
+        // often than app code across deploys, and so the main chunk stops
+        // carrying that weight alongside everything else. This is a pure
+        // caching/organization split: still fetched eagerly, same as
+        // today, zero behavior change. It's the other half of fixing the
+        // >500 kB warning — see EventsOverTimeChart's dynamic import in
+        // SummaryPanel.tsx (src/components/SummaryPanel.tsx) for the half
+        // that's a genuine payload deferral, not just a chunk boundary.
+        manualChunks(id) {
+          if (/node_modules\/(react|react-dom|scheduler|use-sync-external-store)\//.test(id)) {
+            return "react-vendor";
+          }
+        },
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     globals: true,
