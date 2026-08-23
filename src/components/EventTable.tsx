@@ -51,18 +51,24 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
       {rows.length === 0 ? (
         <EmptyState title="No events yet" description="Add an event to begin." testId="event-table-empty" />
       ) : (
-        <div className="overflow-x-auto border border-border [&_td]:h-9 [&_td]:py-1 [&_th]:h-8 [&_[data-slot=input]]:h-7 [&_[data-slot=select-trigger]]:h-7">
-          <Table>
+        // table-fixed (not the Table component's default auto layout) is
+        // what makes the TableHead widths below actually binding — auto
+        // layout lets any cell's content (an Input/SelectTrigger) push its
+        // column wider than assigned, which is exactly what forced the
+        // horizontal scrollbar this fixes. No overflow-x-auto wrapper
+        // anymore: with widths that sum to fit the panel, one isn't needed.
+        <div className="border border-border [&_td]:h-9 [&_td]:px-1.5 [&_td]:py-1 [&_th]:h-8 [&_th]:px-1.5 [&_[data-slot=input]]:h-7 [&_[data-slot=input]]:px-1.5 [&_[data-slot=select-trigger]]:h-7 [&_[data-slot=select-trigger]]:px-1.5">
+          <Table className="table-fixed">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-10 font-mono text-xs tracking-wider uppercase">#</TableHead>
-                <TableHead className="font-mono text-xs tracking-wider uppercase">ID</TableHead>
-                <TableHead className="font-mono text-xs tracking-wider uppercase">Action</TableHead>
-                <TableHead className="font-mono text-xs tracking-wider uppercase">Parcel</TableHead>
-                <TableHead className="font-mono text-xs tracking-wider uppercase">Student</TableHead>
-                <TableHead className="font-mono text-xs tracking-wider uppercase">Pickup Code</TableHead>
-                <TableHead className="font-mono text-xs tracking-wider uppercase">Shelf</TableHead>
-                <TableHead className="w-10 text-right">
+                <TableHead className="w-6 font-mono text-xs tracking-wider uppercase">#</TableHead>
+                <TableHead className="w-14 font-mono text-xs tracking-wider uppercase">ID</TableHead>
+                <TableHead className="w-28 font-mono text-xs tracking-wider uppercase">Action</TableHead>
+                <TableHead className="w-14 font-mono text-xs tracking-wider uppercase">Parcel</TableHead>
+                <TableHead className="w-40 font-mono text-xs tracking-wider uppercase">Student</TableHead>
+                <TableHead className="w-28 font-mono text-xs tracking-wider uppercase">Pickup Code</TableHead>
+                <TableHead className="w-14 font-mono text-xs tracking-wider uppercase">Shelf</TableHead>
+                <TableHead className="w-9 text-right">
                   <span className="sr-only">Row actions</span>
                 </TableHead>
               </TableRow>
@@ -77,7 +83,7 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
                       aria-label={`Row ${index + 1} Event ID`}
                       value={row.data.id}
                       onChange={(event) => updateField(row.key, "id", event.target.value)}
-                      className="min-w-24 font-mono"
+                      className="min-w-0 font-mono"
                     />
                   </TableCell>
 
@@ -95,7 +101,11 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
                       value={row.data.action}
                       onValueChange={(value) => updateField(row.key, "action", String(value))}
                     >
-                      <SelectTrigger aria-label={`Row ${index + 1} Action`} className="w-28 font-mono">
+                      {/* w-full min-w-0 (overriding the primitive's default
+                          w-fit) is what lets this shrink to its 24-wide
+                          column instead of forcing it wider — the same fix
+                          as the Inputs below. */}
+                      <SelectTrigger aria-label={`Row ${index + 1} Action`} className="w-full min-w-0 font-mono">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -113,7 +123,7 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
                       aria-label={`Row ${index + 1} Parcel ID`}
                       value={row.data.parcelId}
                       onChange={(event) => updateField(row.key, "parcelId", event.target.value)}
-                      className="min-w-20 font-mono"
+                      className="min-w-0 font-mono"
                     />
                   </TableCell>
 
@@ -123,7 +133,7 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
                       value={row.data.student}
                       onChange={(event) => updateField(row.key, "student", event.target.value)}
                       placeholder={row.data.action === "COLLECT" ? "–" : undefined}
-                      className="min-w-24"
+                      className="min-w-0"
                     />
                   </TableCell>
 
@@ -132,7 +142,7 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
                       aria-label={`Row ${index + 1} Pickup Code`}
                       value={row.data.pickupCode}
                       onChange={(event) => updateField(row.key, "pickupCode", event.target.value.toUpperCase())}
-                      className="min-w-20 font-mono uppercase"
+                      className="min-w-0 font-mono uppercase"
                       maxLength={4}
                     />
                   </TableCell>
@@ -143,7 +153,7 @@ export function EventTable({ rows, dispatch }: EventTableProps) {
                       value={row.data.shelf}
                       onChange={(event) => updateField(row.key, "shelf", event.target.value)}
                       placeholder={row.data.action === "COLLECT" ? "–" : undefined}
-                      className="min-w-16 font-mono"
+                      className="min-w-0 font-mono"
                     />
                   </TableCell>
 
