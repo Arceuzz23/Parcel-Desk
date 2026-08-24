@@ -9,6 +9,20 @@ export function validateEvents(inputs: EventInput[]): ValidationResult {
   const errors: ValidationError[] = [];
   const seenIds = new Set<string>();
 
+  // Full-table lookup of every parcel ID that has an ARRIVE row anywhere in
+  // the log, used below to reject a COLLECT for a parcel that was never
+  // logged as arriving. Independent of source order (unlike the processor's
+  // PARCEL_NOT_PENDING, which is a state rejection for a parcel that arrived
+  // but isn't currently pending) and independent of that ARRIVE row's own
+  // validity — this only asks "does the log contain an ARRIVE with this
+  // parcel ID at all".
+  const arrivedParcelIds = new Set(
+    inputs
+      .filter((input) => input.action.trim() === "ARRIVE")
+      .map((input) => input.parcelId.trim())
+      .filter((parcelId) => parcelId !== ""),
+  );
+
   inputs.forEach((input, index) => {
     const rowIndex = index + 1;
     const id = input.id.trim();
@@ -66,6 +80,16 @@ export function validateEvents(inputs: EventInput[]): ValidationResult {
         field: "Pickup Code",
         code: "INVALID_PICKUP_CODE",
         message: `${label} · Pickup Code · Invalid pickup code: must be 4 characters, uppercase letters or digits only`,
+      });
+    }
+
+    if (action === "COLLECT" && parcelId !== "" && !arrivedParcelIds.has(parcelId)) {
+      errors.push({
+        rowIndex,
+        eventId: id,
+        field: "Parcel ID",
+        code: "PARCEL_NOT_FOUND",
+        message: `${label} · Parcel ID · No parcel to collect: ${parcelId} never arrived`,
       });
     }
 

@@ -64,3 +64,44 @@ export const staggerChildren = (staggerMs = 40): Variants => ({
     transition: { staggerChildren: staggerMs / 1000 },
   },
 });
+
+/**
+ * Initial-load entrance, adapted from Motion.dev's "OSS Hero" staggered
+ * spring-entrance example (motion.dev/examples/react-hero-stagger): a
+ * stagger container plus per-item spring variants is the same mechanic,
+ * re-tuned from a marketing hero down to an operations console — smaller
+ * vertical travel, an overdamped (no-overshoot) spring, and a short
+ * stagger, so it reads as "fast and polished," not "landing page."
+ *
+ * Used exactly once, in src/app/App.tsx, around the handful of dashboard
+ * sections present at first paint (Header, Summary, Handover Board, Event
+ * Timeline, Event Log). App.tsx's root element never unmounts during the
+ * session, so this only ever plays on true initial load — a Run, an edit,
+ * or a Reset re-renders those sections in place without re-triggering it.
+ * Every other visible state change (a parcel arriving, an outcome
+ * resolving, a validation error) continues to use `popIn`/`fadeInUp`/
+ * `staggerChildren` above, not this.
+ */
+export const ENTRANCE_SPRING: Transition = {
+  type: "spring",
+  stiffness: 360,
+  damping: 40,
+  mass: 0.8,
+};
+
+/** Orchestrates entranceItem children ~80ms apart (60-100ms band) — short
+ *  enough that the whole sequence completes in well under a second. */
+export const entranceContainer: Variants = {
+  initial: {},
+  animate: {
+    transition: { staggerChildren: 0.08, delayChildren: 0.02 },
+  },
+};
+
+/** One dashboard section's entrance: fade + a 10px rise, settling via an
+ *  overdamped spring — no exit variant, since nothing using this ever
+ *  unmounts as part of entrance choreography. */
+export const entranceItem: Variants = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: ENTRANCE_SPRING },
+};

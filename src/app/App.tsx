@@ -1,5 +1,5 @@
 import { useReducer } from "react";
-import { MotionConfig } from "motion/react";
+import { motion, MotionConfig } from "motion/react";
 import { Header } from "@/components/Header";
 import { EventTable } from "@/components/EventTable";
 import { ValidationBanner } from "@/components/ValidationBanner";
@@ -8,6 +8,7 @@ import { HandoverBoard } from "@/components/HandoverBoard";
 import { SummaryPanel } from "@/components/SummaryPanel";
 import { ShelfMap } from "@/components/ShelfMap";
 import { appReducer, createInitialState } from "@/app/appReducer";
+import { entranceContainer, entranceItem } from "@/lib/motion";
 
 /**
  * Root component. This is the ONLY place *application* state lives (one
@@ -30,6 +31,19 @@ import { appReducer, createInitialState } from "@/app/appReducer";
  * lastResult, so the board/timeline/summary you see stay exactly as they
  * were until you explicitly click "Run Handover" again. See "state
  * separation" in docs/PLAN.md.
+ *
+ * Initial-load entrance: the outermost element below is an
+ * `entranceContainer` (src/lib/motion.ts), staggering each major section
+ * (Header, Summary, Handover Board, Event Timeline, Event Log) into place
+ * via `entranceItem` — one spring-based fade + rise each, adapted from
+ * Motion.dev's OSS Hero stagger example but tuned down for an operations
+ * console. This component itself never unmounts during the session (only
+ * its children re-render as `state` changes), so the sequence plays once,
+ * on first paint, and never replays on a Run/edit/Reset. Shelf Map is
+ * deliberately not part of it — it doesn't exist in the DOM before the
+ * first Run (see ShelfMap.tsx's early `return null`), so it has nothing
+ * to be part of an *initial-load* entrance; it keeps its own existing
+ * per-cell appear animation instead.
  */
 function App() {
   const [state, dispatch] = useReducer(appReducer, undefined, createInitialState);
@@ -46,10 +60,19 @@ function App() {
     // single point where that policy is applied; individual components
     // never need their own reduced-motion checks.
     <MotionConfig reducedMotion="user">
-      <div className="mx-auto flex min-h-svh w-full max-w-[1600px] flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <Header onRun={() => dispatch({ type: "RUN" })} onReset={() => dispatch({ type: "RESET" })} />
+      <motion.div
+        variants={entranceContainer}
+        initial="initial"
+        animate="animate"
+        className="mx-auto flex min-h-svh w-full max-w-[1600px] flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8"
+      >
+        <motion.div variants={entranceItem}>
+          <Header onRun={() => dispatch({ type: "RUN" })} onReset={() => dispatch({ type: "RESET" })} />
+        </motion.div>
 
-        <SummaryPanel result={state.lastResult} />
+        <motion.div variants={entranceItem}>
+          <SummaryPanel result={state.lastResult} />
+        </motion.div>
 
         <ValidationBanner errors={state.validationErrors} />
 
@@ -58,18 +81,26 @@ function App() {
               Rejected Events section — see EventTimeline.tsx) — the
               operational read of "what happened." */}
           <div className="flex flex-col gap-4">
-            <HandoverBoard result={state.lastResult} selectedParcelId={state.selectedParcelId} onSelectParcel={handleSelectParcel} />
-            <EventTimeline result={state.lastResult} selectedParcelId={state.selectedParcelId} onSelectParcel={handleSelectParcel} />
+            <motion.div variants={entranceItem}>
+              <HandoverBoard result={state.lastResult} selectedParcelId={state.selectedParcelId} onSelectParcel={handleSelectParcel} />
+            </motion.div>
+            <motion.div variants={entranceItem}>
+              <EventTimeline result={state.lastResult} selectedParcelId={state.selectedParcelId} onSelectParcel={handleSelectParcel} />
+            </motion.div>
           </div>
 
           {/* RIGHT: Shelf Map -> Event Log — the spatial read of "where
-              things are," then the editable input that drives the next run. */}
+              things are," then the editable input that drives the next run.
+              ShelfMap is intentionally outside the entrance stagger — see
+              the doc comment above. */}
           <div className="flex flex-col gap-4">
             <ShelfMap result={state.lastResult} selectedParcelId={state.selectedParcelId} onSelectParcel={handleSelectParcel} />
-            <EventTable rows={state.rows} dispatch={dispatch} />
+            <motion.div variants={entranceItem}>
+              <EventTable rows={state.rows} dispatch={dispatch} />
+            </motion.div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </MotionConfig>
   );
 }

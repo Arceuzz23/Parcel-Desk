@@ -203,9 +203,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
@@ -232,6 +234,7 @@ body {
    read this via `useReducedMotion()`/`MotionConfig reducedMotion="user"` —
    see src/lib/motion.ts and src/app/App.tsx. */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

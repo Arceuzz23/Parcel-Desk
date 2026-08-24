@@ -122,12 +122,31 @@ describe("validateEvents — structural rules", () => {
   });
 
   it("does not require student or shelf for COLLECT", () => {
-    const result = validateEvents([baseCollect({ student: "", shelf: "" })]);
+    const result = validateEvents([
+      baseArrive({ id: "E01" }),
+      baseCollect({ id: "E02", student: "", shelf: "" }),
+    ]);
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects a COLLECT whose parcel never arrived as PARCEL_NOT_FOUND", () => {
+    const result = validateEvents([baseCollect({ parcelId: "P99" })]);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({ code: "PARCEL_NOT_FOUND", field: "Parcel ID" }),
+    );
+  });
+
+  it("accepts a COLLECT when a matching ARRIVE appears later in the table", () => {
+    const result = validateEvents([
+      baseCollect({ id: "E01", parcelId: "P01" }),
+      baseArrive({ id: "E02", parcelId: "P01" }),
+    ]);
     expect(result.valid).toBe(true);
   });
 
   it("still requires a valid pickup code for COLLECT", () => {
-    const result = validateEvents([baseCollect({ pickupCode: "bad" })]);
+    const result = validateEvents([baseArrive({ id: "E01" }), baseCollect({ id: "E02", pickupCode: "bad" })]);
     expect(result.valid).toBe(false);
     expect(result.errors[0].code).toBe("INVALID_PICKUP_CODE");
   });

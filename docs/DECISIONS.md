@@ -136,3 +136,27 @@
   reduced-motion handling. RTL tests exercise non-reduced behavior;
   `e2e/accessibility.spec.ts`'s dedicated reduced-motion test covers the
   real preference in a real browser.
+
+## New structural validation rule — COLLECT with no matching ARRIVE
+
+- Added `PARCEL_NOT_FOUND` (`ValidationErrorCode` in types.ts): a full-table
+  structural check in `validateEvents()` that rejects a COLLECT row whose
+  Parcel ID has no ARRIVE row anywhere in the table. This is deliberately
+  distinct from `PARCEL_NOT_PENDING`, the existing processor-level state
+  rejection for a parcel that *did* arrive but isn't currently pending
+  (already collected, or the COLLECT precedes its ARRIVE in source order).
+  `PARCEL_NOT_FOUND` only fires when the parcel never arrived at all,
+  anywhere in the table — order-independent, like the existing
+  `DUPLICATE_EVENT_ID` full-table check, not source-order-dependent like
+  the processor's checks.
+- This keeps the "structural vs. state distinction is mandatory" rule
+  (PLAN.md) intact for every other rejection type: `PARCEL_ALREADY_SEEN`,
+  `ACTIVE_CODE_COLLISION`, `PARCEL_NOT_PENDING`, and `PICKUP_CODE_MISMATCH`
+  are still valid processing outcomes that don't invalidate the run.
+  `PARCEL_NOT_FOUND` is the one deliberate carve-out, added on explicit
+  user request (confirmed via clarifying question before implementation,
+  since it changes documented behavior) rather than inferred from the
+  spec.
+- Confirmed the built-in canonical fixture and all documented acceptance
+  scenarios in PLAN.md still pass unchanged — every COLLECT in those
+  fixtures already has a matching ARRIVE.

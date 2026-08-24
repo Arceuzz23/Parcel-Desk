@@ -69,7 +69,8 @@ export interface HandoverSummary {
 export type ValidationErrorCode =
   | "INVALID_EVENT"
   | "DUPLICATE_EVENT_ID"
-  | "INVALID_PICKUP_CODE";
+  | "INVALID_PICKUP_CODE"
+  | "PARCEL_NOT_FOUND";
 
 export interface ValidationError {
   rowIndex: number;

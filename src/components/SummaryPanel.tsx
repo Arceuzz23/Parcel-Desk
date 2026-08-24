@@ -1,10 +1,8 @@
 import { lazy, Suspense } from "react";
 import NumberFlow from "@number-flow/react";
-import { motion } from "motion/react";
 import { EmptyState } from "@/components/EmptyState";
 import type { HandoverResult } from "@/lib/types";
 import { getEventsOverTime, getSummary } from "@/lib/selectors";
-import { fadeInUp } from "@/lib/motion";
 
 /**
  * Lazy, not a static import — see docs/DECISIONS.md's bundle-size entry.
@@ -72,10 +70,11 @@ export function SummaryPanel({ result }: SummaryPanelProps) {
   };
 
   return (
-    <motion.div
-      variants={fadeInUp}
-      initial="initial"
-      animate="animate"
+    // Mount entrance now lives one level up, in App.tsx's entranceContainer/
+    // entranceItem stagger — this used to own its own fadeInUp mount
+    // animation independently; that would now double-animate against the
+    // wrapping entranceItem, so this is a plain div again.
+    <div
       className="grid grid-cols-1 gap-4 border border-border bg-surface p-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center"
       aria-label="Handover status"
     >
@@ -117,7 +116,7 @@ export function SummaryPanel({ result }: SummaryPanelProps) {
           </Suspense>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

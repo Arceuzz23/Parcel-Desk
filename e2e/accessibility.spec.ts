@@ -15,9 +15,12 @@ import { expect, test } from "@playwright/test";
 test.describe("accessibility", () => {
   test("initial (pre-run) state has no detectable violations", async ({ page }) => {
     await page.goto("/");
-    // The summary tiles fade in on mount (fadeInUp — see
-    // src/lib/motion.ts); same reasoning as the wait below.
-    await page.waitForTimeout(300);
+    // The whole dashboard staggers in on mount (entranceContainer/
+    // entranceItem — see src/lib/motion.ts): 5 sections at ~80ms apart,
+    // the last (Event Log) starting around ~340ms in and then settling —
+    // same reasoning as the wait below, sized for this longer sequence
+    // rather than the single-panel fade it used to cover.
+    await page.waitForTimeout(900);
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
     expect(results.violations).toEqual([]);
   });
@@ -42,7 +45,10 @@ test.describe("accessibility", () => {
     await page.getByLabel("Row 6 Event ID", { exact: true }).fill("E05");
     await page.getByTestId("run-handover").click();
     await page.waitForSelector('[data-testid="validation-banner"]');
-    await page.waitForTimeout(300); // let the banner's fade-in settle
+    // Covers both the banner's own fade-in and, defensively, the tail end
+    // of the initial-mount entrance stagger (src/lib/motion.ts) in case
+    // the fill+click actions above complete before it's fully settled.
+    await page.waitForTimeout(500);
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
     expect(results.violations).toEqual([]);
   });

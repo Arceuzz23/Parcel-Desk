@@ -1,3 +1,4 @@
+
 import type { CollectedParcel, Event, EventOutcome, HandoverResult, PendingParcel } from "./types";
 
 /**
